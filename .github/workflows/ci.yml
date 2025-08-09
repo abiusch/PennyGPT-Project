@@ -2,30 +2,36 @@ name: CI
 
 on:
   push:
-    branches: [ main, phase2-dev, phase2-fix ]
+    branches: [ main, phase2-dev ]
   pull_request:
     branches: [ main ]
 
 jobs:
-  tests:
+  test:
     runs-on: ubuntu-latest
-    env:
-      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: requirements.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install pytest
+          pip install pytest pre-commit
+
+      - name: Nested repo check
+        run: bash scripts/check-nested-repos.sh
+
+      - name: Run pre-commit (all files)
+        run: pre-commit run --all-files --show-diff-on-failure
 
       - name: Run pytest
         run: pytest -q tests --ignore=whisper
