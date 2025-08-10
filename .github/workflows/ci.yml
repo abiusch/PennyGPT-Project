@@ -2,24 +2,30 @@ name: CI
 
 on:
   push:
-    branches: [ main, phase2-dev, phase2-fix ]
+    branches: [ main, phase2-dev ]
   pull_request:
     branches: [ main ]
+  schedule:
+    - cron: '17 8 * * *'  # daily at 08:17 UTC
 
 jobs:
-  tests:
+  test:
     runs-on: ubuntu-latest
     env:
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
     steps:
       - uses: actions/checkout@v4
 
+      - name: Nested repo check
+        shell: bash
+        run: |
+          chmod +x scripts/check-nested-repos.sh
+          bash scripts/check-nested-repos.sh
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: requirements.txt
 
       - name: Install dependencies
         run: |
